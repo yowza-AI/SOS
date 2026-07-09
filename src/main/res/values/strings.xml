@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SOS Alert</string>
+    <string name="accessibility_service_label">SOS Emergency Trigger</string>
+    <string name="sos_notification_title">🚨 SOS Ready</string>
+    <string name="sos_notification_text">Emergency contacts ready</string>
+</resources>

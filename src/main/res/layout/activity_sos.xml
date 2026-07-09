@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@android:color/black"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/recording_state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🚨 SOS ACTIVE"
+        android:textSize="28sp"
+        android:textColor="@android:color/white"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"
+        android:padding="16dp"
+        android:background="@android:color/holo_red_dark" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="HOLD RED BUTTON\nTO RECORD & SEND"
+        android:textSize="18sp"
+        android:textColor="@android:color/white"
+        android:gravity="center"
+        android:layout_marginBottom="32dp" />
+
+    <Button
+        android:id="@+id/sos_button"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:text="HOLD"
+        android:textSize="32sp"
+        android:textColor="@android:color/white"
+        android:background="@drawable/button_sos_background"
+        android:layout_marginBottom="32dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="Emergency Contacts: 3\nLocation: Tracking\nBattery: 87%"
+        android:textSize="14sp"
+        android:textColor="@android:color/darker_gray"
+        android:gravity="bottom|center" />
+
+</LinearLayout>
