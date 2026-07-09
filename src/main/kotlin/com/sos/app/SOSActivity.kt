@@ -9,12 +9,19 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.sos.app.data.ContactStorage
 import com.sos.app.recording.RecordingManager
+import com.sos.app.upload.UploadManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SOSActivity : AppCompatActivity() {
     private lateinit var recordingStateView: TextView
     private lateinit var sosButton: Button
     private lateinit var recordingManager: RecordingManager
+    private lateinit var uploadManager: UploadManager
+    private lateinit var contactStorage: ContactStorage
     private val TAG = "SOSActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,6 +31,8 @@ class SOSActivity : AppCompatActivity() {
         recordingStateView = findViewById(R.id.recording_state)
         sosButton = findViewById(R.id.sos_button)
         recordingManager = RecordingManager(this)
+        uploadManager = UploadManager(this)
+        contactStorage = ContactStorage(this)
 
         setupSOSButton()
         requestRequiredPermissions()
@@ -45,14 +54,18 @@ class SOSActivity : AppCompatActivity() {
     private fun startRecording() {
         if (recordingManager.isRecording()) return
 
-        // TODO: Get contacts from SharedPreferences/Database
-        val contacts = listOf("emergency@example.com")
+        val contacts = contactStorage.getVerifiedContacts().map { it.email }
+        if (contacts.isEmpty()) {
+            recordingStateView.text = "❌ No verified contacts\nAdd contacts in Setup"
+            Log.e(TAG, "No verified contacts")
+            return
+        }
 
         if (recordingManager.start(contacts)) {
             recordingStateView.text = "🔴 RECORDING"
             recordingStateView.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
             sosButton.text = "RECORDING..."
-            Log.d(TAG, "Recording started")
+            Log.d(TAG, "Recording started, contacts: ${contacts.size}")
         } else {
             recordingStateView.text = "❌ Failed to start"
             Log.e(TAG, "Failed to start recording")
@@ -64,14 +77,30 @@ class SOSActivity : AppCompatActivity() {
 
         if (recordingManager.stop()) {
             val duration = recordingManager.getRecordingDuration()
-            recordingStateView.text = "✓ Recorded ${duration}s\nUploading..."
+            recordingStateView.text = "✓ Recorded ${duration}s\n⏳ Uploading..."
             recordingStateView.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
             sosButton.text = "UPLOADING..."
 
             val buffer = recordingManager.getIncidentBuffer()
             if (buffer != null) {
-                Log.d(TAG, "Incident buffered: ${buffer.getIncidentId()}, size: ${buffer.getTotalSize()} bytes")
-                // TODO: Start upload process with buffer.getAllFilesForIncident()
+                Log.d(TAG, "Starting upload for incident ${buffer.getIncidentId()}")
+
+                // Upload in background
+                CoroutineScope(Dispatchers.IO).launch {
+                    val result = uploadManager.uploadIncident(buffer)
+                    runOnUiThread {
+                        if (result.success) {
+                            recordingStateView.text = "✅ Sent to ${result.contactResults.size} contacts\n${result.message}"
+                            recordingStateView.setBackgroundColor(ContextCompat.getColor(this@SOSActivity, android.R.color.holo_green_dark))
+                            sosButton.text = "COMPLETE"
+                            Log.d(TAG, "Upload successful: ${result.message}")
+                        } else {
+                            recordingStateView.text = "⚠️ Upload error\n${result.message}"
+                            recordingStateView.setBackgroundColor(ContextCompat.getColor(this@SOSActivity, android.R.color.holo_orange_dark))
+                            Log.e(TAG, "Upload failed: ${result.message}")
+                        }
+                    }
+                }
             }
         } else {
             recordingStateView.text = "❌ Error stopping"
