@@ -271,58 +271,6 @@ Upload Starts
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 ```
 
----
-
-## Testing Checklist
-
-### Phase 1: Trigger
-- [ ] Power button 4x rapid press detected on Android 9
-- [ ] Power button 4x rapid press detected on Android 11
-- [ ] Power button 4x rapid press detected on Android 14
-- [ ] Power button 4x rapid press detected on Android 15
-- [ ] SOS activity launches within 2 seconds
-- [ ] Red button visible and responsive
-- [ ] Accessibility service survives app backgrounding
-
-### Phase 2: Recording
-- [ ] Dual-camera recording on Samsung Galaxy S20+
-- [ ] Dual-camera recording on Google Pixel 6
-- [ ] Falls back to rear-only on single-camera device
-- [ ] Audio records cleanly (test with ambient noise)
-- [ ] GPS logs at 5-second intervals with accuracy
-- [ ] Files encrypt to local storage
-- [ ] Release button stops recording cleanly
-- [ ] App survives 10+ minutes of recording without crash
-
-### Phase 3: Upload
-- [ ] Video chunks created and stored locally
-- [ ] Email delivery via SendGrid (or SMTP) successful
-- [ ] Dropbox upload works with OAuth token
-- [ ] Firebase GPS updates appear on dashboard
-- [ ] Contact receives SMS notification with live location link
-- [ ] Upload resumes after network drop
-
-### Phase 4: Contacts
-- [ ] Add contact flow works
-- [ ] Contact list updates in UI
-- [ ] Verification SMS/email sent and received
-- [ ] Verified flag updates on confirmation
-- [ ] Test mode records without notifying
-
----
-
-## Known Limitations
-
-| Limitation | Why | Workaround |
-|---|---|---|
-| Power button detection 60-85% reliable | Accessibility API limitations | Volume button fallback (95%), gesture triggers |
-| Only ~23% of Android devices support dual-camera concurrent | Hardware limitation | Graceful fallback to rear camera only |
-| Video stops if app backgrounds | iOS/Android camera API design | Record only while foregrounded; audio can background |
-| Email file size limits (~25MB) | Email provider restrictions | Chunk video into 20-25MB segments |
-| GPS accuracy varies by location | GPS hardware + environment | Use FusedLocationProviderClient; fallback to last known good fix |
-
----
-
 ## Code Structure
 
 ```
@@ -353,47 +301,6 @@ src/main/kotlin/com/sos/app/
     └── ContactStorage.kt           # SharedPreferences storage
 ```
 
----
-
-## Next Steps
-
-### Immediate (This Week)
-1. **Email uploader**: Integrate SendGrid API or SMTP for sending chunked video
-2. **Contact notifications**: SMS (Twilio) + push (FCM) + email (SendGrid)
-3. **Contact verification**: SMS/email token flow
-
-### Short Term (Next 1-2 Weeks)
-1. **Firebase dashboard**: Web UI for viewing incidents + live map
-2. **Dropbox integration**: OAuth2 + direct upload to contact's account
-3. **Device testing**: Android 9/11/14/15, dual-camera matrix
-
-### Before Launch
-1. **Legal review**: Recording consent laws (2-party vs 1-party states, GDPR)
-2. **Anti-abuse UX**: Biometric lock, notifications on config changes, device-owner indicators
-3. **Store compliance**: Play Store policies, privacy manifest, accessibility review
-4. **Beta testing**: Real users, permission flows, error scenarios
-
----
-
-## Debugging
-
-### View logs
-```bash
-adb logcat -s "SOSActivity" "RecordingManager" "UploadManager"
-```
-
-### Test SOS Activity manually
-- Open app → "Test SOS" button → Press and hold red button → Release
-
-### Check incident buffer
-```bash
-adb shell "run-as com.sos.app find /data/data/com.sos.app/files/incidents -type f"
-```
-
-### View Firebase data (if configured)
-- Console: https://console.firebase.google.com/ → Realtime Database → incidents
-
----
 
 ## Privacy & Security
 
@@ -404,42 +311,6 @@ adb shell "run-as com.sos.app find /data/data/com.sos.app/files/incidents -type 
 - **Contact consent**: SMS/email verification before adding to alert list
 - **No telemetry**: No analytics on recorded content
 
----
-
-## Contributing
-
-This is an active project. Architecture is frozen for Phase 1-4; Phase 5 is open for collaboration.
-
-```bash
-git checkout -b feature/xyz
-# Code
-git commit -m "Clear description of what changed and why"
-git push
-```
-
----
-
-## License
-
-TBD (Likely open-source safety software license—GPL or MIT)
-
----
-
-## Technical Notes for Architects & Interviewers
-
-- **Constraint-driven design**: Every architectural choice is justified by a specific problem (see ARCHITECTURE_DECISIONS.md).
-- **Graceful degradation**: System never fails silently. If dual-camera unsupported, records rear only. If network down, buffers locally.
-- **Edge cases built-in**: Thermal throttling, Doze mode, permission denials, old Android versions, diverse hardware.
-- **Platform awareness**: iOS restrictions (no background video) and Android fragmentation (OEM customization, 40+ Android versions in use) inform every API choice.
-- **Security model**: No single point of failure. Evidence persists even if company infrastructure is compromised (it's on contact's own cloud or in their email).
-
-**Questions for technical interviews:**
-- Why no `androidx.camera` (CameraX)? → See ARCHITECTURE_DECISIONS.md
-- How does GPS streaming scale to 10K concurrent incidents? → Firebase free tier math included
-- What happens if Twilio API is down? → Fallback to email + SMS sent via Contact, see ContactNotifier
-- Why no client-side video compression? → Tradeoff between CPU drain + battery vs. bandwidth. Speed > compression for emergency.
-
----
 
 **Last Updated:** July 2026  
 **Architect**: [Your Name]  
