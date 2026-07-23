@@ -313,5 +313,5 @@ src/main/kotlin/com/sos/app/
 
 
 **Last Updated:** July 2026  
-**Architect**: [Your Name]  
+**Architect**: Stephen Yow  
 **Status**: Phase 1-4 complete | Phase 5 (compliance + anti-abuse UX) in progress
